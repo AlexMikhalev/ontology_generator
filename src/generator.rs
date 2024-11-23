@@ -43,6 +43,7 @@ struct PropertyData {
     type_name: String,
     subject: String,
     required: bool,
+    is_array: bool,
 }
 
 pub struct OntologyGenerator {
@@ -262,33 +263,6 @@ impl OntologyGenerator {
         })
     }
 
-    fn generate_property_data(&self, property: &Resource) -> Result<PropertyData> {
-        let shortname = property
-            .get_propvals()
-            .get(urls::SHORTNAME)
-            .map(|v| v.to_string())
-            .ok_or_else(|| anyhow::anyhow!("Property missing shortname"))?;
-
-        let name = self.sanitize_name(&shortname).to_case(Case::Snake);
-
-        let description = property
-            .get_propvals()
-            .get(urls::DESCRIPTION)
-            .map(|v| v.to_string())
-            .unwrap_or_else(|| "".to_string());
-
-        let type_name = self.atomic_type_to_rust_type(property)?;
-
-        Ok(PropertyData {
-            name,
-            shortname,
-            description,
-            type_name,
-            subject: property.get_subject().to_string(),
-            required: false,
-        })
-    }
-
     fn atomic_type_to_rust_type(&self, property: &Resource) -> Result<String> {
         let datatype = property
             .get_propvals()
@@ -303,6 +277,43 @@ impl OntologyGenerator {
             urls::RESOURCE_ARRAY => "Vec<String>".into(),
             urls::ATOMIC_URL => "String".into(),
             _ => "String".into(),
+        })
+    }
+
+    fn is_array_type(&self, property: &Resource) -> bool {
+        property
+            .get_propvals()
+            .get(urls::DATATYPE_PROP)
+            .map(|v| v.to_string())
+            .map(|dt| dt == urls::RESOURCE_ARRAY)
+            .unwrap_or(false)
+    }
+
+    fn generate_property_data(&self, property: &Resource) -> Result<PropertyData> {
+        let shortname = property
+            .get_propvals()
+            .get(urls::SHORTNAME)
+            .map(|v| v.to_string())
+            .ok_or_else(|| anyhow::anyhow!("Property missing shortname"))?;
+
+        let name = self.sanitize_name(&shortname).to_case(Case::Snake);
+        let description = property
+            .get_propvals()
+            .get(urls::DESCRIPTION)
+            .map(|v| v.to_string())
+            .unwrap_or_else(|| "".to_string());
+
+        let type_name = self.atomic_type_to_rust_type(property)?;
+        let is_array = self.is_array_type(property);
+
+        Ok(PropertyData {
+            name,
+            shortname,
+            description,
+            type_name,
+            subject: property.get_subject().to_string(),
+            required: false,
+            is_array,
         })
     }
 

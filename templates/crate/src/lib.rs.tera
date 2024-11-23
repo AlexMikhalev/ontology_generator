@@ -7,7 +7,7 @@
 pub mod {{ ontology.module_name }};
 {%- endfor %}
 
-use atomic_lib::{Store, Storelike};
+use atomic_lib::{Store, Storelike, urls, Collection, CollectionBuilder, storelike::ForAgent};
 use anyhow::Result;
 
 /// Initialize and print information about all ontologies
@@ -25,7 +25,13 @@ pub fn print_ontology_info() -> Result<()> {
     println!("Description: {{ class.description }}");
     println!("Properties:");
     {%- for prop in class.properties %}
-    println!("  - {}: {}", "{{ prop.name }}", instance.{{ prop.name }});
+    println!("  - {}: {}", "{{ prop.name }}", 
+        {%- if prop.is_array -%}
+        instance.{{ prop.name }}.join(", ")
+        {%- else -%}
+        instance.{{ prop.name }}
+        {%- endif -%}
+    );
     {%- endfor %}
     {%- endfor %}
     {%- endfor %}
@@ -40,5 +46,43 @@ mod tests {
     #[test]
     fn test_print_ontology_info() -> Result<()> {
         print_ontology_info()
+    }
+
+    #[tokio::test]
+    async fn test_class_instances() -> Result<()> {
+        let store = Store::init()?;
+        store.populate()?;
+
+        {%- for ontology in ontologies %}
+        println!("\nTesting instances of {{ ontology.name }} classes");
+        {%- for class in ontology.classes %}
+        // Test {{ class.name }} instances
+        let collection = CollectionBuilder::new(&store)
+            .set_property(urls::IS_A)
+            .set_value("{{ class.subject }}")
+            .build();
+
+        println!("\nInstances of {{ class.name }}:");
+        for member in collection.get_members()? {
+            let resource = store.get_resource(&member)?;
+            let instance = {{ ontology.module_name }}::{{ class.name }}::from_resource(&resource, &store)?;
+            
+            // Verify required properties
+            {%- for prop in class.properties %}
+            {%- if prop.required %}
+            assert!(!instance.{{ prop.name }}.is_empty(), "{{ prop.name }} should not be empty for instance {}", member);
+            {%- endif %}
+            {%- endfor %}
+
+            // Print instance details
+            println!("  Subject: {}", member);
+            {%- for prop in class.properties %}
+            println!("    {{ prop.name }}: {}", instance.{{ prop.name }});
+            {%- endfor %}
+        }
+        {%- endfor %}
+        {%- endfor %}
+
+        Ok(())
     }
 }

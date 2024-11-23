@@ -1,6 +1,6 @@
 {
-    "output_folder": "/tmp/generated_ontologies",
+    "output_folder": "/tmp/learning-rust",
     "ontologies": [
-      "https://atomicdata.dev/ontology/core"
+      "https://common.terraphim.io/drive/h6grD0ID/ontology/learning-rust"
     ]
   }
