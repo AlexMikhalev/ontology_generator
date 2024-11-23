@@ -1,0 +1,6 @@
+{
+    "output_folder": "/tmp/generated_ontologies",
+    "ontologies": [
+      "https://atomicdata.dev/ontology/core"
+    ]
+  }

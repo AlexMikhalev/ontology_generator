@@ -1,0 +1,108 @@
+# {{ name }}
+
+{{ description }}
+
+This crate was automatically generated using atomic-ontology-generator.
+
+## Available Ontologies
+
+{% for ontology in ontologies %}
+### {{ ontology.name }}
+
+{{ ontology.description }}
+
+Available Classes:
+{% for class in ontology.classes %}
+- `{{ class.name }}`: {{ class.description }}
+{% endfor %}
+
+{% endfor %}
+
+## Usage
+
+1. Add this crate to your dependencies:
+
+```toml
+[dependencies]
+{{ name }} = "{{ version }}"
+atomic_lib = { version = "0.40.0", features = ["config"] }
+```
+
+2. Initialize the ontologies at the start of your application:
+
+```rust
+use {{ name }}::init_ontologies;
+fn main() -> anyhow::Result<()> {
+// Initialize ontologies
+init_ontologies()?;
+// Your code here
+Ok(())
+}
+```
+3. Use the generated types:
+
+```rust
+use atomic_lib::{Store, Storelike};
+use {{ name }}::;
+fn example() -> anyhow::Result<()> {
+let store = Store::init()?;
+// Get a resource
+let resource = store.get_resource("https://example.com/resource")?;
+// Convert to a typed struct
+{% if ontologies[0].classes[0] %}
+let typed = {{ ontologies[0].classes[0].name }}::from_resource(&resource, &store)?;
+// Access typed properties
+println!("{{ ontologies[0].classes[0].properties[0].name }}: {}", typed.{{ ontologies[0].classes[0].properties[0].name }});
+{% endif %}
+Ok(())
+}
+```
+
+
+## Features
+
+- Type-safe access to Atomic Data resources
+- Serialization/deserialization support
+- Generated from Atomic Data ontologies
+- Full test coverage
+- Documentation for all types
+
+## Available Types
+
+{% for ontology in ontologies %}
+### {{ ontology.name }} Module
+
+Classes:
+{% for class in ontology.classes %}
+#### {{ class.name }}
+
+{{ class.description }}
+
+Properties:
+{% for prop in class.properties %}
+- `{{ prop.name }}`: {{ prop.type_name }}{% if prop.required %} (required){% endif %} - {{ prop.description }}
+{% endfor %}
+
+{% endfor %}
+{% endfor %}
+
+## Testing
+
+Run the tests:
+
+```bash
+cargo test
+```
+
+## License
+
+MIT
+
+## Generated Code
+
+This crate was automatically generated from the following ontologies:
+{% for ontology in ontologies %}
+- {{ ontology.name }}: `{{ ontology.module_name }}`
+{% endfor %}
+
+Do not edit this code directly. Instead, update the ontologies and regenerate using atomic-ontology-generator.
