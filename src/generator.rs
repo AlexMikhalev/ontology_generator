@@ -70,6 +70,10 @@ impl OntologyGenerator {
         tera.add_template_file("templates/crate/src/ontology.rs.tera", Some("ontology.rs"))?;
         tera.add_template_file("templates/crate/src/mod.rs.tera", Some("mod.rs"))?;
         tera.add_template_file("templates/crate/README.md.tera", Some("README.md"))?;
+        tera.add_template_file(
+            "templates/crate/tests/integration_test.rs.tera",
+            Some("integration_test.rs"),
+        )?;
 
         Ok(Self {
             store,
@@ -123,6 +127,13 @@ impl OntologyGenerator {
             .tera
             .render("mod.rs", &Context::from_serialize(&crate_data)?)?;
         fs::write(output_dir.join("src/mod.rs"), mod_rs)?;
+
+        // Generate integration tests
+        fs::create_dir_all(output_dir.join("tests"))?;
+        let integration_test = self
+            .tera
+            .render("integration_test.rs", &Context::from_serialize(&crate_data)?)?;
+        fs::write(output_dir.join("tests/integration_test.rs"), integration_test)?;
 
         Ok(())
     }
